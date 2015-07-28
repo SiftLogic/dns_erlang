@@ -18,7 +18,7 @@
 %%
 %% -------------------------------------------------------------------
 -module(dns_record_info).
--include("dns_records.hrl").
+-include("../include/dns_records.hrl").
 -export([fields/1, size/1, atom_for_type/1, type_for_atom/1]).
 
 -ifdef(TEST).
@@ -219,7 +219,7 @@ recinfo_test_() ->
     Tags = [dns_rr|[ atom_for_type(Type) || Type <- Types ]],
     [ {atom_to_list(Tag),
        ?_assertEqual(length(fields(Tag)),
-		     ?MODULE:size(Tag) - 1)}
+                     ?MODULE:size(Tag) - 1)}
       || Tag <- Tags ].
 
 -endif.

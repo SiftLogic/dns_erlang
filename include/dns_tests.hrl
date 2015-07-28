@@ -21,7 +21,7 @@ message_other_test() ->
     QName = <<"i            .txt.example.org">>,
     Qs = [#dns_query{name = QName, type = ?DNS_TYPE_TXT}],
     As = [#dns_rr{name = QName, type = ?DNS_TYPE_TXT, ttl = 0,
-		  data = #dns_rrdata_txt{txt = [QName]}}],
+                  data = #dns_rrdata_txt{txt = [QName]}}],
     QLen = length(Qs),
     ALen = length(As),
     Msg = #dns_message{qc = QLen, anc = ALen, questions = Qs, answers = As},
@@ -32,20 +32,20 @@ message_edns_test() ->
     QName = <<"_http._tcp.example.org">>,
     Qs = [#dns_query{name = QName, type = ?DNS_TYPE_PTR}],
     Ans = [#dns_rr{name = QName, type = ?DNS_TYPE_PTR, ttl = 42,
-		   data = #dns_rrdata_ptr{
-		     dname = <<"Example\ Site._http._tcp.example.org">>
-		    }}],
+                   data = #dns_rrdata_ptr{
+                             dname = <<"Example\ Site._http._tcp.example.org">>
+                            }}],
     LLQ = #dns_opt_llq{opcode = ?DNS_LLQOPCODE_SETUP,
-		       errorcode = ?DNS_LLQERRCODE_NOERROR,
-		       id = 42,
-		       leaselife = 7200},
+                       errorcode = ?DNS_LLQERRCODE_NOERROR,
+                       id = 42,
+                       leaselife = 7200},
     Ads = [#dns_optrr{udp_payload_size = 4096, ext_rcode = 0, version = 0,
-		      dnssec=false, data = [LLQ]}],
+                      dnssec=false, data = [LLQ]}],
     QLen = length(Qs),
     AnsLen = length(Ans),
     AdsLen = length(Ads),
     Msg = #dns_message{qc = QLen, anc = AnsLen, adc = AdsLen,
-		       questions = Qs, answers = Ans, additional = Ads},
+                       questions = Qs, answers = Ans, additional = Ads},
     Bin = encode_message(Msg),
     ?assertEqual(Msg, decode_message(Bin)).
 
@@ -59,15 +59,15 @@ tsig_bad_key_test() ->
     MsgId = random_id(),
     B64 = <<"abcdefgh">>,
     TSIGData = #dns_rrdata_tsig{alg = ?DNS_TSIG_ALG_MD5,
-				time = unix_time(),
-				fudge = 0,
-				mac = B64,
-				msgid = MsgId,
-				err = 0,
-				other = <<>>
-			       },
+                                time = unix_time(),
+                                fudge = 0,
+                                mac = B64,
+                                msgid = MsgId,
+                                err = 0,
+                                other = <<>>
+                               },
     TSIG = #dns_rr{name = <<"name_a">>, type = ?DNS_TYPE_TSIG, ttl = 0,
-		   data = TSIGData},
+                   data = TSIGData},
     Msg = #dns_message{id=MsgId, adc = 1, additional=[TSIG]},
     MsgBin = encode_message(Msg),
     Result = verify_tsig(MsgBin, <<"name_b">>, B64),
@@ -77,7 +77,7 @@ tsig_bad_alg_test() ->
     Id = random_id(),
     Name = <<"keyname">>,
     Data = #dns_rrdata_tsig{alg = <<"null">>, time = unix_time(), fudge = 0,
-			    mac = <<"MAC">>, msgid = Id, err = 0, other = <<>>},
+                            mac = <<"MAC">>, msgid = Id, err = 0, other = <<>>},
     RR = #dns_rr{name = Name, type = ?DNS_TYPE_TSIG, ttl = 0, data = Data},
     Msg = #dns_message{id = Id, adc = 1, additional = [RR]},
     MsgBin = encode_message(Msg),
@@ -109,13 +109,13 @@ tsig_badtime_test_() ->
     SignedMsgBin = encode_message(SignedMsg),
     Now = unix_time(),
     [ ?_test(
-	 begin
-	     BadNow = Now + (Throwoff * Fudge),
-	     Options = [{fudge, 30}, {time, BadNow}],
-	     Result = verify_tsig(SignedMsgBin, Name, Secret, Options),
-	     ?assertEqual({error, ?DNS_TSIGERR_BADTIME}, Result)
-	 end
-	) || Throwoff <- [ -2, 2 ] ].
+         begin
+             BadNow = Now + (Throwoff * Fudge),
+             Options = [{fudge, 30}, {time, BadNow}],
+             Result = verify_tsig(SignedMsgBin, Name, Secret, Options),
+             ?assertEqual({error, ?DNS_TSIGERR_BADTIME}, Result)
+         end
+        ) || Throwoff <- [ -2, 2 ] ].
 
 tsig_ok_test_() ->
     application:start(crypto),
@@ -123,21 +123,21 @@ tsig_ok_test_() ->
     Name = <<"keyname">>,
     Secret = crypto:rand_bytes(20),
     Algs = [ ?DNS_TSIG_ALG_MD5, ?DNS_TSIG_ALG_SHA1, ?DNS_TSIG_ALG_SHA224,
-	     ?DNS_TSIG_ALG_SHA256, ?DNS_TSIG_ALG_SHA384, ?DNS_TSIG_ALG_SHA512 ],
+             ?DNS_TSIG_ALG_SHA256, ?DNS_TSIG_ALG_SHA384, ?DNS_TSIG_ALG_SHA512 ],
     Msg = #dns_message{id=MsgId},
     Options = [{time, unix_time()}, {fudge, 30}],
     [ {Alg,
        ?_test(
-	  begin
-	      SignedMsg = add_tsig(Msg, Alg, Name, Secret, 0),
-	      SignedMsgBin = encode_message(SignedMsg),
-	      Result = case verify_tsig(SignedMsgBin, Name, Secret, Options) of
-			   {ok, _MAC} -> ok;
-			   Error -> Error
-		       end,
-	      ?assertEqual(ok, Result)
-	  end
-	 )} || Alg <- Algs ].
+          begin
+              SignedMsg = add_tsig(Msg, Alg, Name, Secret, 0),
+              SignedMsgBin = encode_message(SignedMsg),
+              Result = case verify_tsig(SignedMsgBin, Name, Secret, Options) of
+                           {ok, _MAC} -> ok;
+                           Error -> Error
+                       end,
+              ?assertEqual(ok, Result)
+          end
+         )} || Alg <- Algs ].
 
 tsig_wire_test_() ->
     application:start(crypto),
@@ -147,14 +147,14 @@ tsig_wire_test_() ->
     {ok, Cases} = file:consult("../priv/tsig_wire_samples.txt"),
     [ {Alg,
        ?_test(
-	  begin
-	      Result = case verify_tsig(Msg, Keyname, Secret, [{time, Now}]) of
-			   {ok, MAC} when is_binary(MAC) -> ok;
-			   X -> X
-		       end,
-	      ?assertEqual(ok, Result)
-	  end
-	 )} || {Alg, Msg} <- Cases ].
+          begin
+              Result = case verify_tsig(Msg, Keyname, Secret, [{time, Now}]) of
+                           {ok, MAC} when is_binary(MAC) -> ok;
+                           X -> X
+                       end,
+              ?assertEqual(ok, Result)
+          end
+         )} || {Alg, Msg} <- Cases ].
 
 %%%===================================================================
 %%% Record data functions
@@ -163,40 +163,40 @@ tsig_wire_test_() ->
 decode_encode_rrdata_wire_samples_test_() ->
     {ok, Cases} = file:consult("../priv/rrdata_wire_samples.txt"),
     ToTestName = fun({Class, Type, Bin}) ->
-			 Fmt = "~p/~p/~n~p",
-			 Args = [Class, Type, Bin],
-			 lists:flatten(io_lib:format(Fmt, Args))
-		 end,
+                         Fmt = "~p/~p/~n~p",
+                         Args = [Class, Type, Bin],
+                         lists:flatten(io_lib:format(Fmt, Args))
+                 end,
     [ {ToTestName(Case),
        ?_test(
-	  begin
-	      NewBin = case decode_rrdata(Class, Type, TestBin, TestBin) of
-			   TestBin when Type =:= 999 -> TestBin;
-			   TestBin -> throw(not_decoded);
-			   Record ->
-			       {Bin, _} = encode_rrdata(0, Class, Record,
-							gb_trees:empty()),
-			       Bin
-		       end,
-	      ?assertEqual(TestBin, NewBin)
-	  end
-	 )} || {Class, Type, TestBin} = Case <- Cases ].
+          begin
+              NewBin = case decode_rrdata(Class, Type, TestBin, TestBin) of
+                           TestBin when Type =:= 999 -> TestBin;
+                           TestBin -> throw(not_decoded);
+                           Record ->
+                               {Bin, _} = encode_rrdata(0, Class, Record,
+                                                        gb_trees:empty()),
+                               Bin
+                       end,
+              ?assertEqual(TestBin, NewBin)
+          end
+         )} || {Class, Type, TestBin} = Case <- Cases ].
 
 decode_encode_rrdata_test_() ->
     %% For testing records that don't have wire samples
     Cases = [ {?DNS_TYPE_MB, #dns_rrdata_mb{madname = <<"example.com">>}},
-	      {?DNS_TYPE_MG, #dns_rrdata_mg{madname = <<"example.com">>}},
-	      {?DNS_TYPE_MINFO, #dns_rrdata_minfo{rmailbx = <<"a.b">>,
-						  emailbx = <<"c.d">>}},
-	      {?DNS_TYPE_MR, #dns_rrdata_mr{newname = <<"example.com">>}} ],
+              {?DNS_TYPE_MG, #dns_rrdata_mg{madname = <<"example.com">>}},
+              {?DNS_TYPE_MINFO, #dns_rrdata_minfo{rmailbx = <<"a.b">>,
+                                                  emailbx = <<"c.d">>}},
+              {?DNS_TYPE_MR, #dns_rrdata_mr{newname = <<"example.com">>}} ],
     [ ?_test(
-	 begin
-	     {Encoded, _NewCompMap} = encode_rrdata(0, ?DNS_CLASS_IN, Data,
-						    gb_trees:empty()),
-	     Decoded = decode_rrdata(?DNS_CLASS_IN, Type, Encoded, Encoded),
-	     ?assertEqual(Data, Decoded)
-	 end
-	)
+         begin
+             {Encoded, _NewCompMap} = encode_rrdata(0, ?DNS_CLASS_IN, Data,
+                                                    gb_trees:empty()),
+             Decoded = decode_rrdata(?DNS_CLASS_IN, Type, Encoded, Encoded),
+             ?assertEqual(Data, Decoded)
+         end
+        )
       || {Type, Data} <- Cases ].
 
 %%%===================================================================
@@ -205,32 +205,32 @@ decode_encode_rrdata_test_() ->
 
 decode_encode_optdata_test_() ->
     Cases = [ #dns_opt_llq{opcode = ?DNS_LLQOPCODE_SETUP,
-			   errorcode = ?DNS_LLQERRCODE_NOERROR,
-			   id = 123,
-			   leaselife = 456},
-	      #dns_opt_ul{lease = 789},
-	      #dns_opt_nsid{data = <<"hi">>},
-	      #dns_opt_unknown{id = 999, bin = <<"hi">>} ],
+                           errorcode = ?DNS_LLQERRCODE_NOERROR,
+                           id = 123,
+                           leaselife = 456},
+              #dns_opt_ul{lease = 789},
+              #dns_opt_nsid{data = <<"hi">>},
+              #dns_opt_unknown{id = 999, bin = <<"hi">>} ],
     [ ?_assertEqual([Case], decode_optrrdata(encode_optrrdata([Case])))
       || Case <- Cases ].
 
 decode_encode_optdata_owner_test_() ->
     application:start(crypto),
     Cases = [ #dns_opt_owner{seq = crypto:rand_uniform(0, 255),
-			     primary_mac = crypto:rand_bytes(6),
-			     wakeup_mac = crypto:rand_bytes(6),
-			     password = crypto:rand_bytes(6)},
-	      #dns_opt_owner{seq = crypto:rand_uniform(0, 255),
-			     primary_mac = crypto:rand_bytes(6),
-			     wakeup_mac = crypto:rand_bytes(6),
-			     password = crypto:rand_bytes(4)},
-	      #dns_opt_owner{seq = crypto:rand_uniform(0, 255),
-			     primary_mac = crypto:rand_bytes(6),
-			     wakeup_mac = crypto:rand_bytes(6),
-			     _ = <<>>},
-	      #dns_opt_owner{seq = crypto:rand_uniform(0, 255),
-			     primary_mac = crypto:rand_bytes(6),
-			     _ = <<>>} ],
+                             primary_mac = crypto:rand_bytes(6),
+                             wakeup_mac = crypto:rand_bytes(6),
+                             password = crypto:rand_bytes(6)},
+              #dns_opt_owner{seq = crypto:rand_uniform(0, 255),
+                             primary_mac = crypto:rand_bytes(6),
+                             wakeup_mac = crypto:rand_bytes(6),
+                             password = crypto:rand_bytes(4)},
+              #dns_opt_owner{seq = crypto:rand_uniform(0, 255),
+                             primary_mac = crypto:rand_bytes(6),
+                             wakeup_mac = crypto:rand_bytes(6),
+                             _ = <<>>},
+              #dns_opt_owner{seq = crypto:rand_uniform(0, 255),
+                             primary_mac = crypto:rand_bytes(6),
+                             _ = <<>>} ],
     [ ?_assertEqual([Case], decode_optrrdata(encode_optrrdata([Case])))
       || Case <- Cases ].
 
@@ -253,7 +253,7 @@ decode_dname_bad_pointer_test() ->
 
 encode_dname_1_test_() ->
     Cases = [ {"example", <<7,101,120,97,109,112,108,101,0>>},
-	      {<<"example">>, <<7,101,120,97,109,112,108,101,0>>} ],
+              {<<"example">>, <<7,101,120,97,109,112,108,101,0>>} ],
     [ ?_assertEqual(Expect, encode_dname(Input)) || {Input, Expect} <- Cases ].
 
 encode_dname_3_test_() ->
@@ -268,25 +268,25 @@ encode_dname_4_test_() ->
     MPB = <<0:MP/unit:8>>,
     {_, CM1} = encode_dname(MPB, gb_trees:empty(), MP, <<"example">>),
     Cases = [ {<<7,101,120,97,109,112,108,101,0>>, Bin0},
-	      {<<7,101,120,97,109,112,108,101,0,192,0>>, Bin1},
-	      {Bin1, Bin2},
-	      {gb_trees:empty(), CM1}
-	    ],
+              {<<7,101,120,97,109,112,108,101,0,192,0>>, Bin1},
+              {Bin1, Bin2},
+              {gb_trees:empty(), CM1}
+            ],
     [ ?_assertEqual(Expect, Result) || {Expect, Result} <- Cases ].
 
 dname_to_labels_test_() ->
     Cases = [ {"", []}, {".", []}, {<<>>, []}, {<<".">>, []},
-	      {"a.b.c", [<<"a">>, <<"b">>, <<"c">>]},
-	      {<<"a.b.c">>, [<<"a">>, <<"b">>, <<"c">>]},
-	      {"a.b.c.", [<<"a">>, <<"b">>, <<"c">>]},
-	      {<<"a.b.c.">>, [<<"a">>, <<"b">>, <<"c">>]},
-	      {"a\\.b.c", [<<"a.b">>, <<"c">>]},
-	      {<<"a\\.b.c">>, [<<"a.b">>, <<"c">>]} ],
+              {"a.b.c", [<<"a">>, <<"b">>, <<"c">>]},
+              {<<"a.b.c">>, [<<"a">>, <<"b">>, <<"c">>]},
+              {"a.b.c.", [<<"a">>, <<"b">>, <<"c">>]},
+              {<<"a.b.c.">>, [<<"a">>, <<"b">>, <<"c">>]},
+              {"a\\.b.c", [<<"a.b">>, <<"c">>]},
+              {<<"a\\.b.c">>, [<<"a.b">>, <<"c">>]} ],
     [ ?_assertEqual(Expect, dname_to_labels(Arg)) || {Arg, Expect} <- Cases ].
 
 labels_to_dname_test_() ->
     Cases = [{[<<"a">>, <<"b">>, <<"c">>], <<"a.b.c">>},
-	     {[<<"a.b">>, <<"c">>], <<"a\\.b.c">>}],
+             {[<<"a.b">>, <<"c">>], <<"a\\.b.c">>}],
     [ ?_assertEqual(Expect, labels_to_dname(Arg)) || {Arg, Expect} <- Cases ].
 
 dname_to_upper_test_() ->
@@ -324,7 +324,7 @@ type_name_test_() ->
 
 alg_terms_test_() ->
     Cases = [ ?DNS_ALG_DSA, ?DNS_ALG_NSEC3DSA, ?DNS_ALG_RSASHA1,
-	      ?DNS_ALG_NSEC3RSASHA1, ?DNS_ALG_RSASHA256, ?DNS_ALG_RSASHA512 ],
+              ?DNS_ALG_NSEC3RSASHA1, ?DNS_ALG_RSASHA256, ?DNS_ALG_RSASHA512 ],
     [ ?_assertEqual(true, is_binary(dns:alg_name(Alg))) || Alg <- Cases ].
 
 %%%===================================================================

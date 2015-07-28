@@ -1,4 +1,3 @@
-% -*- mode: Erlang; -*-
 {application, dns,
  [
   {description, "DNS library"},
